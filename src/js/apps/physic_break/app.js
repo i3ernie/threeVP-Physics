@@ -68,6 +68,7 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             floorMesh.position.set( 0, -5, 0 );
 
             floorMesh.userData.physicsBody = new PhysicWorld.PhysicFloor( floorMesh );
+            VP.scene.add( floorMesh );
             PW.add( floorMesh );
             
             var floor = new THREE.Mesh( new THREE.BoxGeometry(35,1,35) ); // new Floor({width:35, depth:30});
