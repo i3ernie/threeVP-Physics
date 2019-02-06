@@ -1,0 +1,81 @@
+{
+    "description": "threeVP-Physics",
+    "name": "threeVP-Physics",
+    "private": true,
+    "homepage": "https://carat.de/",
+    "version": "0.0.8",
+    
+    "license": {
+        "type" : "MIT",
+        "url" : "https://github.com/i3ernie/html5-boilerplate/blob/master/LICENSE.txt"
+    },
+    
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/i3ernie/threeVP-Physics.git"
+    },
+    
+  
+    "devDependencies": {
+        "@alrra/travis-scripts": "^1.1.1",
+        "apache-server-configs": "latest",
+        "archiver": "latest",
+        "babel": "latest",
+        "bower": "latest",
+        "del": "latest",
+        "glob": "latest",
+
+        "gulp": "latest",
+        "gulp-autoprefixer": "latest",
+        "gulp-header": "latest",
+        "gulp-jscs": "latest",
+        "gulp-jshint": "latest",
+        "gulp-load-plugins": "latest",
+        "gulp-rename": "latest",
+        "gulp-replace": "latest",
+
+        "jshint": "latest",
+        "jshint-stylish": "latest",
+        "mocha": "latest",
+        "normalize.css": "latest",
+
+        "require-css": "latest",
+        "requirejs": "latest",
+        "requirejs-babel-plugin": "latest",
+        "requirejs-plugins": "latest",
+        "requirejs-text": "latest",
+
+        "run-sequence": "latest"
+    },
+    
+    "dependencies": {
+        "jquery-ui"     : "latest",
+        "lodash"        : "latest",
+        "threeVP-Extras": "git://github.com/i3ernie/threeVP-Extras.js.git"
+    },
+    
+    "directories": {
+        "dist"  : "dist",
+        "src"   : "src",
+        "test"  : "test"
+    },
+    
+    "engines": {
+        "node": ">=4.4"
+    },
+  
+    "threeVP-Physi-configs": {
+        "directories": {
+            "archive": "archive",
+            "dist": "dist",
+            "src": "src",
+            "test": "test"
+        }
+  },
+  
+    "jshintConfig": {},
+    "scripts": {
+      "build" : "gulp build",
+      "test" : "gulp archive && mocha --reporter spec --timeout 5000"
+    }
+}
