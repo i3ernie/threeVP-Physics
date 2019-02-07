@@ -3,9 +3,9 @@
  */
 define(["three", "lodash", "globals", "cmd", "Viewport", "PhysicWorld", "extras/FragilWorld",
     "SkyBox", "lights/Sunlight", "stuff/Terrain", "stuff/Floor", "stuff/Catapult",
-     "extras/objects/RandomObject", "ammo"],
+     "extras/objects/RandomObject"],
 function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
-              SkyBox, Sunlight, Terrain, Floor, Catapult, RandomObject, Ammo)
+              SkyBox, Sunlight, Terrain, Floor, Catapult, RandomObject)
 {
     var VP, PW;
     var options;
@@ -26,7 +26,7 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
     var objectTimePeriod = 2;
     var timeNextSpawn = time + objectTimePeriod;
     
-    var hemiLight, object, loader;
+    var hemiLight;
  
 
     var APP = function()
@@ -49,12 +49,11 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
 
 
             //SkyBox
-            var skybox = new SkyBox( options );
-            VP.scene.add( skybox );
+            VP.scene.add( new SkyBox( options ) );
 
 
             // directional light
-            var dir_light = new Sunlight( {size : 15 , debug:false} );
+            let dir_light = new Sunlight( {size : 15 , debug:false} );
             dir_light.position.set( 30, 40, -5 );
             dir_light.target.position.copy( VP.scene.position );
             VP.scene.add( dir_light );
@@ -66,26 +65,25 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             //floor
             var floorMesh = new Terrain( {width : 128, depth : 128} );
             floorMesh.position.set( 0, -5, 0 );
-
-            floorMesh.userData.physicsBody = new PhysicWorld.PhysicFloor( floorMesh );
-            VP.scene.add( floorMesh );
-            PW.add( floorMesh );
             
-            var floor = new THREE.Mesh( new THREE.BoxGeometry(35,1,35) ); // new Floor({width:35, depth:30});
-            floor.position.set(0,4,0);
+            PW.floorAddPhysic( floorMesh );
+            VP.scene.add( floorMesh );
+            
+            var floor = new THREE.Mesh( new THREE.BoxGeometry(35, 1, 35) ); // new Floor({width:35, depth:30});
+            floor.position.set( 0, 4, 0 );
+            //floor.userData.breakable = true;
             PW.primitivAddPhysic( floor, {mass:0} );
 
             VP.scene.add( floor );
             
-            
             catapult = new Catapult( VP, PW );
             
             
-            var material = new THREE.MeshPhongMaterial( { color: 0x202020 } );
+            var material = new THREE.MeshPhongMaterial( { color: 0x303060 } );
             
             //Tower
             var t1 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
-            t1.position.set( 0, 10, 0 );
+            t1.position.set( 0, 9.5, 10 );
             t1.userData.breakable = true;
             
             PW.primitivAddPhysic( t1 );
@@ -95,7 +93,7 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             
             //Tower2
             var t2 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
-            t2.position.set( 10, 10, 0 );
+            t2.position.set( 10, 9.5, 0 );
             t2.userData.breakable = true;
             
             PW.primitivAddPhysic( t2 );
@@ -103,30 +101,29 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             VP.scene.add( t2 );
 
             
-            VP.loop.add( function( delta ){ 
-               
+            VP.loop.add( function( delta )
+            {    
             	if ( PW.dynamicObjects.length < maxNumObjects && time > timeNextSpawn ) {
                     generateObject();
             		timeNextSpawn = time + objectTimePeriod;
             	}               
                 time += delta;
             });
-            //VP.loop.add( FW.updatePhysics );
 
-
-            function generateObject() 
-            {            		
-            	var objectSize = 3;
-
-                var threeObject = new RandomObject({ objectSize : objectSize });             
-                threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
-                
-                PW.primitivAddPhysic( threeObject );
-                VP.scene.add( threeObject );
-            }
             
             VP.start();
         };
+        
+        function generateObject() 
+        {            		
+            var objectSize = 3;
+
+            var threeObject = new RandomObject({ objectSize : objectSize });             
+            threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
+
+            PW.primitivAddPhysic( threeObject );
+            VP.scene.add( threeObject );
+        }
     };
     
     
