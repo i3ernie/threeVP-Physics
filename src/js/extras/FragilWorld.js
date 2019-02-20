@@ -10,12 +10,12 @@ define(["lodash", "ammo", "three", "vendor/threejs/extras/ConvexObjectBreaker"],
         gravity : [0, -6, 0]
     };
     
-    var impactPoint     = new THREE.Vector3();
-    var impactNormal    = new THREE.Vector3();
-    var objectsToRemove = [];
-    var numObjectsToRemove = 0;
+    let impactPoint     = new THREE.Vector3();
+    let impactNormal    = new THREE.Vector3();
+    let objectsToRemove = [];
+    let numObjectsToRemove = 0;
     
-    var FragilWorld = function( VP, PW, opt ){
+    let FragilWorld = function( VP, PW, opt ){
         
         this.options = _.extend( {}, defaults, opt );
         this.PW = PW;
@@ -23,7 +23,7 @@ define(["lodash", "ammo", "three", "vendor/threejs/extras/ConvexObjectBreaker"],
         
         this.convexBreaker = new THREE.ConvexObjectBreaker();
         
-        var scope = this;
+        let scope = this;
         
         //init array
         for ( let i = 0; i < 500; i++ ) {
@@ -146,6 +146,8 @@ define(["lodash", "ammo", "three", "vendor/threejs/extras/ConvexObjectBreaker"],
             numObjectsToRemove = 0;
         };
     };
+    
+    FragilWorld.name = "FragilWorld";
     
     return FragilWorld;
     

@@ -30,17 +30,19 @@ function (THREE, _, GLOBALS, Viewport, PhysicWorld,
     var timeNextSpawn = time + objectTimePeriod;
  
 
-    var APP = function()
+    var APP = function( opt )
     {
-        this.init = function( opt )
+        options = _.extend( {}, defaults, opt );
+        
+        this.init = function( done )
         {
             VP = GLOBALS.VP = new Viewport();
             PW = new PhysicWorld( VP );
             
-            options = _.extend({}, defaults, opt);
+            ( typeof done === "function" )? done( null, this ) : function(){};
         };
 
-        this.start = function()
+        this.start = function( done )
         {            
             //camera
             VP.camera.position.set( -60, 50, -60 );
@@ -76,6 +78,7 @@ function (THREE, _, GLOBALS, Viewport, PhysicWorld,
             });
             
             VP.start();
+            if ( typeof done === "function" ) done( null, this );
         };
         
         function generateObject() 

@@ -3,46 +3,55 @@
  */
 define(["three", "lodash", "globals", "cmd", "Viewport", "PhysicWorld", "extras/FragilWorld",
     "SkyBox", "lights/Sunlight", "stuff/Terrain", "stuff/Floor", "stuff/Catapult",
-     "extras/objects/RandomObject"],
+     "extras/objects/RandomObject", "require"],
 function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
-              SkyBox, Sunlight, Terrain, Floor, Catapult, RandomObject)
+              SkyBox, Sunlight, Terrain, Floor, Catapult, RandomObject, require)
 {
     var VP, PW;
     var options;
-    var terrainWidth = 128;
-    var terrainDepth = 128;
-    var terrainMaxHeight = 10;
-   
-    var catapult;
     
-    var defaults = {
-        imagePath : "../../img/",
-        shadow : true
+    let terrainMaxHeight = 10;
+   
+    let catapult;
+    
+    let defaults = {
+        "conf" : "conf_break",
+        
+        "imagePath" : "../../img/",
+        "shadow" : true,
+
+        "objectSize"    : 3,
+        "maxNumObjects" : 30,
+        
+        "terrainWidth" : 128,
+        "terrainDepth" : 128
     };
-    		
    
     let time = 0;
-    var maxNumObjects = 30;
-    var objectTimePeriod = 2;
-    var timeNextSpawn = time + objectTimePeriod;
+    let objectTimePeriod = 2;
+    let timeNextSpawn = time + objectTimePeriod;
     
-    var hemiLight;
+    let hemiLight;
  
 
-    var APP = function()
-    {
-        this.init = function()
+    var APP = function( opt )
+    { 
+        options = _.extend( {}, defaults, opt );
+
+        this.init = function( done )
         {
             VP = GLOBALS.VP = new Viewport();
             PW = new PhysicWorld( VP );
-            PW.addPlugin( "Fragil", FragilWorld );
-            
-            options = _.extend({}, defaults);
+            PW.addPlugin( FragilWorld );
+
+            require( ["json!conf/" + options.conf+".json"], function( obj ){
+                options = _.extend( options, obj);
+                if ( typeof done === "function" ) done( null, this );
+            } );
         };
 
-        this.start = function()
+        this.start = function( done )
         {  
-            
             //camera
             VP.camera.position.set( -60, 50, -60 );
             VP.camera.lookAt( new THREE.Vector3( 0, 1, 0 ) );
@@ -63,13 +72,13 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
          			
 				
             //floor
-            var floorMesh = new Terrain( {width : 128, depth : 128} );
+            let floorMesh = new Terrain( {width : options.terrainWidth, depth : options.terrainDepth} );
             floorMesh.position.set( 0, -5, 0 );
             
             PW.floorAddPhysic( floorMesh );
             VP.scene.add( floorMesh );
             
-            var floor = new THREE.Mesh( new THREE.BoxGeometry(35, 1, 35) ); // new Floor({width:35, depth:30});
+            let floor = new THREE.Mesh( new THREE.BoxGeometry(35, 1, 35) ); // new Floor({width:35, depth:30});
             floor.position.set( 0, 4, 0 );
             //floor.userData.breakable = true;
             PW.primitivAddPhysic( floor, {mass:0} );
@@ -79,10 +88,10 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             catapult = new Catapult( VP, PW );
             
             
-            var material = new THREE.MeshPhongMaterial( { color: 0x303060 } );
+            let material = new THREE.MeshPhongMaterial( { color: 0x303060 } );
             
             //Tower
-            var t1 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
+            let t1 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
             t1.position.set( 0, 9.5, 10 );
             t1.userData.breakable = true;
             
@@ -92,7 +101,7 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             
             
             //Tower2
-            var t2 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
+            let t2 = new THREE.Mesh( new THREE.BoxGeometry( 4, 10, 4 ), material );
             t2.position.set( 10, 9.5, 0 );
             t2.userData.breakable = true;
             
@@ -100,32 +109,28 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             
             VP.scene.add( t2 );
 
-            
             VP.loop.add( function( delta )
             {    
-            	if ( PW.dynamicObjects.length < maxNumObjects && time > timeNextSpawn ) {
+            	if ( PW.dynamicObjects.length < options.maxNumObjects && time > timeNextSpawn ) {
                     generateObject();
             		timeNextSpawn = time + objectTimePeriod;
             	}               
                 time += delta;
             });
 
-            
             VP.start();
+            if ( typeof done === "function" ) done( null, this );
         };
-        
+
         function generateObject() 
         {            		
-            var objectSize = 3;
-
-            var threeObject = new RandomObject({ objectSize : objectSize });             
-            threeObject.position.set( ( Math.random() - 0.5 ) * terrainWidth * 0.6, terrainMaxHeight + objectSize + 2, ( Math.random() - 0.5 ) * terrainDepth * 0.6 );
+            let threeObject = new RandomObject({ objectSize : options.objectSize });             
+            threeObject.position.set( ( Math.random() - 0.5 ) * options.terrainWidth * 0.6, terrainMaxHeight + options.objectSize + 2, ( Math.random() - 0.5 ) * options.terrainDepth * 0.6 );
 
             PW.primitivAddPhysic( threeObject );
             VP.scene.add( threeObject );
         }
     };
-    
     
     return APP;
 });

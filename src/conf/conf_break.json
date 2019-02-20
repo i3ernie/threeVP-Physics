@@ -1,0 +1,10 @@
+{
+    "name": "bernie",
+    "shadow" : true,
+
+    "objectSize"    : 3,
+    "maxNumObjects" : 30,
+
+    "terrainWidth" : 100,
+    "terrainDepth" : 100
+}

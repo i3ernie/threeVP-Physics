@@ -5,6 +5,7 @@ require.config({
     "paths": {
        
         "me"            : "../examples/PhysicLight",
+        "conf"          : "../conf",
        
         "img"           : "../img",
         "style"         : "css",
@@ -20,10 +21,14 @@ require.config({
     }
 });
 
-require(["./apps/physic_break/app"], function ( APP ) {
+require(["./apps/app_break", "async"], function ( APP, async ) {
 
     var myApp = new APP();
-     myApp.init();
-     myApp.start();
+    async.series([
+        myApp.init,
+        myApp.start
+    ], function( err, res ){
+        if ( err ) { console.log( err ); }
+    }); 
 
 });

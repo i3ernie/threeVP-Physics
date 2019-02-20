@@ -177,10 +177,10 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
      * @param {type} opts
      * @returns {PhysicWorld}
      */
-    PhysicWorld.prototype.addPlugin = function( name, Plg, opts ){
+    PhysicWorld.prototype.addPlugin = function( Plg, opts ){
         let plg = new Plg( this.VP, this, opts  );
         
-        this.plugins[name] = plg;
+        this.plugins[Plg.name] = plg;
         
         if ( typeof plg.updatePhysics === "function" ) {
             this.VP.loop.add( plg.updatePhysics );
