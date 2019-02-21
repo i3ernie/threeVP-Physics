@@ -6,8 +6,8 @@
 define(["three", "lodash"], function( THREE, _ ){
     
     let defaults = {
-        width : 128,
-        depth : 128,
+        width : 100,
+        depth : 100,
         
         widthSegments : 100,
         depthSegments : 100,
@@ -16,17 +16,17 @@ define(["three", "lodash"], function( THREE, _ ){
         maxHeight : 8
     };
     
-    var generateHeight =function( opt, maxHeight, minHeight ) 
+    var generateHeight = function( opt ) 
     {
         // Generates the height data (a sinus wave)
-        var size = opt.width * opt.depth;
-        var data = new Float32Array( size );
-        var hRange = maxHeight - minHeight;
+        let size = opt.width * opt.depth;
+        let data = new Float32Array( size );
+        let hRange = opt.maxHeight - opt.minHeight;
         
-        var w2 = opt.width / 2;
-        var d2 = opt.depth / 2;
+        let w2 = opt.width / 2;
+        let d2 = opt.depth / 2;
         
-        var phaseMult = 12;
+        let phaseMult = 12;
         let p = 0;
         
         for ( let j = 0; j < opt.depth; j ++ ) {
@@ -35,7 +35,7 @@ define(["three", "lodash"], function( THREE, _ ){
                     Math.pow( ( i - w2 ) / w2, 2.0 ) +
                     Math.pow( ( j - d2 ) / d2, 2.0 ) 
                 );
-                let height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5  * hRange + minHeight;
+                let height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5  * hRange + opt.minHeight;
                 data[ p ] = height;
                 p++;
             }
@@ -45,16 +45,16 @@ define(["three", "lodash"], function( THREE, _ ){
     
     var Terrain = function( opt )
     {
-        this.options = _.extend({}, defaults, opt);
+        this.options = _.extend( {}, defaults, opt );
         
         var scope = this;
         
         console.log( this.options );
         
-        let geometry = new THREE.PlaneBufferGeometry( 100, 100, this.options.widthSegments - 1, this.options.depthSegments - 1 );
+        let geometry = new THREE.PlaneBufferGeometry( this.options.width, this.options.depth, this.options.widthSegments - 1, this.options.depthSegments - 1 );
         geometry.rotateX( - Math.PI / 2 );
-        var vertices = geometry.attributes.position.array;
-        var heightData = generateHeight( this.options, this.options.minHeight, this.options.maxHeight );
+        let  vertices = geometry.attributes.position.array;
+        let  heightData = generateHeight( this.options );
         
         for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
             // j + 1 because it is the y component that we modify
@@ -66,7 +66,7 @@ define(["three", "lodash"], function( THREE, _ ){
         let material = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
         
         
-        THREE.Mesh.call(this, geometry, material);
+        THREE.Mesh.call( this, geometry, material );
         
         let textureLoader = new THREE.TextureLoader();
         textureLoader.load( "./textures/grid.png", function( texture ) {
