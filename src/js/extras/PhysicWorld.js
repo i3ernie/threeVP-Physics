@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
+define(["lodash", "ammo", "three", "extras/PhysicTerrain"], function( _, Ammo, THREE, PhysicTerrain ){
     
     let defaults = {
         gravity : [0, -6, 0]
@@ -16,16 +16,32 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
         this.plugins = {};
         this.options = _.extend({}, defaults, opt);
 
-        var collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-        this.dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-        var broadphase = new Ammo.btDbvtBroadphase();
-        var solver = new Ammo.btSequentialImpulseConstraintSolver();
+        let collisionConfiguration  = new Ammo.btDefaultCollisionConfiguration();
+        let broadphase              = new Ammo.btDbvtBroadphase();
+        let solver                  = new Ammo.btSequentialImpulseConstraintSolver();
         
-        this.world = new Ammo.btDiscreteDynamicsWorld( this.dispatcher, broadphase, solver, collisionConfiguration );
+        this.dispatcher     = new Ammo.btCollisionDispatcher( collisionConfiguration );
+        this.world          = new Ammo.btDiscreteDynamicsWorld( this.dispatcher, broadphase, solver, collisionConfiguration );
         this.world.setGravity( new Ammo.btVector3( this.options.gravity[0], this.options.gravity[1], this.options.gravity[2] ) ); 
         this.dynamicObjects = [];
         
         VP.loop.add( this.updatePhysics.bind(this) );
+    };
+    
+    PhysicWorld.prototype.calcVolume = function( geometry ){
+        if ( typeof geometry !== "object" ) { 
+            return 0; 
+        }
+        geometry.computeBoundingBox();
+        geometry.computeBoundingSphere();
+        
+        let sBox = geometry.boundingBox.getSize();
+        let rSphere = geometry.boundingSphere.radius;
+        
+        let volumeBox = sBox.x * sBox.y * sBox.z;
+        let volumeSphere = (4/3) * Math.PI * rSphere * rSphere * rSphere
+        
+        return ( volumeBox < volumeSphere ) ? volumeBox : volumeSphere;
     };
     
     PhysicWorld.prototype.updatePhysics = function ( deltaTime ) {
@@ -55,8 +71,8 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
         
         let defaults = {
             density : 1,
-            size : 3,
-            margin : 0.05
+            size    : 3,
+            margin  : 0.05
         };
         
         let scope = this;
@@ -103,9 +119,7 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
                 
             case "ConvexGeometry":
                 shape = PhysicWorld.createConvexHullPhysicsShape( threeObject.geometry );
-                //ToDo calc volume
-                //shape = new Ammo.btBoxShape( new Ammo.btVector3( 1 , 1 , 1  ) );
-                v = 1;
+                v = this.calcVolume( threeObject.geometry );
                 break;
             
             case "PlaneBufferGeometry":
@@ -118,7 +132,7 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
             default:
                 // Cone
                 v = p.height * 5;
-                shape = PhysicWorld.createConvexHullPhysicsShape( object.geometry.vertices );
+                shape = PhysicWorld.createConvexHullPhysicsShape( threeObject.geometry.vertices );
                 
                 break;
         }
@@ -132,6 +146,7 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
             scope.world.addRigidBody( threeObject._physiBody );
             
         });
+        
         threeObject.addEventListener("removed", function(){
             if ( threeObject.userData.ammo_mass ) {
                 _.pull( scope.dynamicObjects, threeObject );
@@ -139,20 +154,21 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
             scope.world.removeRigidBody( threeObject._physiBody );
         });
 
-        var mass = options.mass || v * options.density;
-        var localInertia = new Ammo.btVector3( 0, 0, 0 );
+        let mass = options.mass || v * options.density;
+        let localInertia = new Ammo.btVector3( 0, 0, 0 );
         shape.calculateLocalInertia( mass, localInertia );
 
-        var transform = new Ammo.btTransform();
+        let transform = new Ammo.btTransform();
         transform.setIdentity();
-        var pos = threeObject.position;
+        let pos = threeObject.position;
         transform.setOrigin( new Ammo.btVector3( pos.x, pos.y, pos.z ) );
 
-        var motionState = new Ammo.btDefaultMotionState( transform );
+        let motionState = new Ammo.btDefaultMotionState( transform );
         threeObject._physiBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( mass, motionState, shape, localInertia ) );
         if( options.velocity ) threeObject._physiBody.setLinearVelocity( new Ammo.btVector3( options.velocity.x, options.velocity.y, options.velocity.z ) );
         
         threeObject.userData.ammo_mass = mass;
+        threeObject.userData.ammo_density = options.density;
         threeObject.userData.physicsBody = threeObject._physiBody;
         
         _.each( this.plugins, function( plg ){
@@ -178,7 +194,7 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
      * @returns {PhysicWorld}
      */
     PhysicWorld.prototype.addPlugin = function( Plg, opts ){
-        let plg = new Plg( this.VP, this, opts  );
+        let plg = new Plg( this, opts  );
         
         this.plugins[Plg.name] = plg;
         
@@ -190,6 +206,11 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
     };
     
     
+    /**
+     * 
+     * @param {type} points
+     * @returns {PhysicWorldL#6.Ammo.btConvexHullShape}
+     */
     PhysicWorld.createConvexHullPhysicsShape = function( points ) 
     {
         if( points instanceof THREE.Geometry ) { 
@@ -200,21 +221,27 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
         let shape = new Ammo.btConvexHullShape();
        
         for ( let i = 0, il = points.length; i < il; i++ ) {
-                var p = points[ i ];
+                let p = points[ i ];
                 tempBtVec3_1.setValue( p.x, p.y, p.z );
-                var lastOne = ( i === ( il - 1 ) );
+                let lastOne = ( i === ( il - 1 ) );
                 shape.addPoint( tempBtVec3_1, lastOne );
         }
         //ToDo: debug
-        console.log(shape);
+        console.log( shape );
         
         return shape;
     };
 
-    PhysicWorld.prototype.floorAddPhysic = function( threeObject ){
+    /**
+     * 
+     * @param {type} threeObject
+     * @returns {unresolved}
+     */
+    PhysicWorld.prototype.terrainAddPhysic = function( threeObject )
+    {
         let scope = this;
         
-        threeObject.userData.physicsBody = new PhysicWorld.PhysicFloor( threeObject );
+        threeObject.userData.physicsBody = new PhysicTerrain( threeObject );
         
         threeObject.addEventListener("added", function(){
             scope.add( threeObject );
@@ -222,91 +249,6 @@ define(["lodash", "ammo", "three"], function( _, Ammo, THREE ){
         
         return threeObject;
     };
-    
-    PhysicWorld.PhysicFloor = function( obj )
-    {    
-        let options = {
-            terrainWidthExtents : 100,
-            terrainDepthExtents : 100
-        };
-        
-        var createTerrainShape = function( opt, vertices ) 
-        {
-            // This parameter is not really used, since we are using PHY_FLOAT height data type and hence it is ignored
-
-            var heightData = [];
-            var terrainMaxHeight = opt.maxHeight;
-            var terrainMinHeight = opt.minHeight;
-            
-            for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-                // j + 1 because it is the y component that we modify
-                heightData[ i ] = vertices[ j + 1 ];
-            }    
-
-            var heightScale = 1;
-            
-            // Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-            var upAxis = 1;
-            
-            // hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-            var hdt = "PHY_FLOAT";
-            
-            // Set this to your needs (inverts the triangles)
-            var flipQuadEdges = false;
-            
-            // Creates height data buffer in Ammo heap
-            var ammoHeightData = Ammo._malloc( 4 * opt.width * opt.depth );
-            
-            // Copy the javascript height data array to the Ammo one.
-            var p = 0;
-            var p2 = 0;
-
-            for ( let j = 0; j < opt.depth; j ++ ) {
-                for ( let i = 0; i < opt.width; i ++ ) {
-                        // write 32-bit float data to memory
-                        Ammo.HEAPF32[ammoHeightData + p2 >> 2] = heightData[ p ];
-                        p ++;
-                        // 4 bytes/float
-                        p2 += 4;
-                }
-            }
-            // Creates the heightfield physics shape
-            var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
-                    opt.width, opt.depth,
-                    ammoHeightData,
-                    heightScale,
-                    terrainMinHeight, terrainMaxHeight,
-                    upAxis,
-                    hdt,
-                    flipQuadEdges
-            );
-                // Set horizontal scale
-                var scaleX = options.terrainWidthExtents / ( opt.width - 1 );
-                var scaleZ = options.terrainDepthExtents / ( opt.depth - 1 );
-                heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
-                heightFieldShape.setMargin( 0.05 );
-                return heightFieldShape;
-        };
-        
-        // Create the terrain body
-        var groundShape = createTerrainShape( obj.options, obj.geometry.attributes.position.array );
-        var transform = new Ammo.btTransform();
-        transform.setIdentity();
-        
-        var pos = obj.position;
-        
-        // Shifts the terrain, since bullet re-centers it on its bounding box.
-        transform.setOrigin( new Ammo.btVector3( pos.x, ( obj.options.maxHeight + obj.options.minHeight ) / 2 + pos.y, pos.z ) );
-        let mass = 0;
-        let groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
-        let motionState = new Ammo.btDefaultMotionState( transform );
-        Ammo.btRigidBody.call(this, new Ammo.btRigidBodyConstructionInfo( mass, motionState, groundShape, groundLocalInertia ) );
-        obj.userData.ammo_mass = mass;
-    };
-    
-    PhysicWorld.PhysicFloor.prototype = _.create( Ammo.btRigidBody.prototype, {
-        constructor : PhysicWorld.PhysicFloor
-    });
     
     return PhysicWorld;
 
