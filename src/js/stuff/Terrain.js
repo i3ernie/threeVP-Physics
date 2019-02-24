@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-define(["three", "lodash"], function( THREE, _ ){
+define(["three", "lodash", "stuff/geometries/TerrainGeometry"], function( THREE, _, TerrainGeometry ){
     
     let defaults = {
         width : 100,
@@ -13,34 +13,9 @@ define(["three", "lodash"], function( THREE, _ ){
         depthSegments : 100,
         
         minHeight : -2,
-        maxHeight : 8
-    };
-    
-    var generateHeight = function( opt ) 
-    {
-        // Generates the height data (a sinus wave)
-        let size = opt.width * opt.depth;
-        let data = new Float32Array( size );
-        let hRange = opt.maxHeight - opt.minHeight;
+        maxHeight : 8,
         
-        let w2 = opt.width / 2;
-        let d2 = opt.depth / 2;
-        
-        let phaseMult = 12;
-        let p = 0;
-        
-        for ( let j = 0; j < opt.depth; j ++ ) {
-            for ( let i = 0; i < opt.width; i ++ ) {
-                let radius = Math.sqrt(
-                    Math.pow( ( i - w2 ) / w2, 2.0 ) +
-                    Math.pow( ( j - d2 ) / d2, 2.0 ) 
-                );
-                let height = ( Math.sin( radius * phaseMult ) + 1 ) * 0.5  * hRange + opt.minHeight;
-                data[ p ] = height;
-                p++;
-            }
-        }
-        return data;
+        color : 0xC7C7C7
     };
     
     var Terrain = function( opt )
@@ -49,22 +24,8 @@ define(["three", "lodash"], function( THREE, _ ){
         
         var scope = this;
         
-        console.log( this.options );
-        
-        let geometry = new THREE.PlaneBufferGeometry( this.options.width, this.options.depth, this.options.widthSegments - 1, this.options.depthSegments - 1 );
-        geometry.rotateX( - Math.PI / 2 );
-        let  vertices = geometry.attributes.position.array;
-        let  heightData = generateHeight( this.options );
-        
-        for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-            // j + 1 because it is the y component that we modify
-            vertices[ j + 1 ] = heightData[ i ];
-        }
-       
-        geometry.computeVertexNormals();
-        
-        let material = new THREE.MeshPhongMaterial( { color: 0xC7C7C7 } );
-        
+        let geometry = new TerrainGeometry ( this.options.width, this.options.depth, this.options );        
+        let material = new THREE.MeshPhongMaterial( { color: this.options.color } );
         
         THREE.Mesh.call( this, geometry, material );
         
