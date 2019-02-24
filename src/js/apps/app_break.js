@@ -23,8 +23,8 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
         "objectSize"    : 3,
         "maxNumObjects" : 30,
         
-        "terrainWidth" : 128,
-        "terrainDepth" : 128
+        "terrainWidth" : 100,
+        "terrainDepth" : 100
     };
    
     let time = 0;
@@ -75,7 +75,7 @@ function (THREE, _, GLOBALS, CMD, Viewport, PhysicWorld, FragilWorld,
             let floorMesh = new Terrain( {width : options.terrainWidth, depth : options.terrainDepth} );
             floorMesh.position.set( 0, -5, 0 );
             
-            PW.floorAddPhysic( floorMesh );
+            PW.terrainAddPhysic( floorMesh );
             VP.scene.add( floorMesh );
             
             let floor = new THREE.Mesh( new THREE.BoxGeometry(35, 1, 35) ); // new Floor({width:35, depth:30});

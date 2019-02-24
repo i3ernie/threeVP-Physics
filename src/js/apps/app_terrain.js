@@ -22,8 +22,8 @@ function (THREE, _, GLOBALS, Viewport, PhysicWorld,
         imagePath       : "../../img/",
         shadow          : true,
         exposure        : 0.68,
-        terrainWidth    : 128,
-        terrainDepth    : 128,
+        terrainWidth    : 100,
+        terrainDepth    : 100,
         terrainMaxHeight : 10
     };
     
@@ -65,7 +65,7 @@ function (THREE, _, GLOBALS, Viewport, PhysicWorld,
             let floorMesh = new Floor( {width : options.terrainWidth, depth : options.terrainDepth} );
             floorMesh.position.set( 0, -5, 0 );
 
-            PW.floorAddPhysic( floorMesh );
+            PW.terrainAddPhysic( floorMesh );
             VP.scene.add( floorMesh );
 
             VP.loop.add( function( delta ){ 
