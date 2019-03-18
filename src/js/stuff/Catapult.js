@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-define(["lodash", "three", "ammo"], function(_, THREE, Ammo){
+define(["lodash", "three"], function( _, THREE ){
     var defaults = {
-        shadow : true,
-        autoLoad : true,
+        shadow      : true,
+        autoLoad    : true,
         
-        ballMass : 35,
-        ballRadius : 0.4
+        ballMass    : 35,
+        ballRadius  : 0.4
     };
     
     var catapult = function( VP, PW, opt)
