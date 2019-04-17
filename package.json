@@ -74,8 +74,10 @@
   },
   
     "jshintConfig": {},
+    
     "scripts": {
-      "build" : "gulp build",
-      "test" : "gulp archive && mocha --reporter spec --timeout 5000"
+        "build" : "gulp build",
+        "update" : "npm update",
+        "test" : "gulp archive && mocha --reporter spec --timeout 5000"
     }
 }

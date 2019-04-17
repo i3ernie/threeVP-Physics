@@ -3,8 +3,6 @@ require.config({
     
     "paths": {
        
-        "me"            : "../examples/PhysicLight",
-       
         "img"           : "../img",
         "style"         : "css",
 
@@ -16,7 +14,8 @@ require.config({
         "Mirror"      :"vendor/threejs/extras/Mirror",
         "plugin"      :"plugins/plugin",
 
-        "PhysicWorld" : "extras/PhysicWorld"
+        "physics"       : "extras/physics",
+        "PhysicWorld"   : "extras/physics/PhysicWorld"
     }
 });
 
